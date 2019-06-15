@@ -16,7 +16,7 @@ class RaidingPeople extends React.Component {
   render() {
     return (
       <div>
-      The following people may be available to raid here now:
+      <h4>The following people may be available to raid here now</h4>
       <input readOnly="readOnly" value="foo bar baz"/>
       </div>
     );
@@ -26,17 +26,16 @@ class RaidingPeople extends React.Component {
 class DaysOfTheWeekSelector extends React.Component {
   render() {
     return (
-      <select multiple="multiple"
-       value={['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']}
-       onChange={this.props.onChange}>
-        <option>Sunday</option>
-        <option>Monday</option>
-        <option>Tuesday</option>
-        <option>Wednesday</option>
-        <option>Thursday</option>
-        <option>Friday</option>
-        <option>Saturday</option>
-      </select>
+      <fieldset>
+      <legend>Days of the week</legend>
+      <input id="sunday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="sunday">Sunday</label><br/>
+      <input id="monday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="monday">Monday</label><br/>
+      <input id="tuesday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="tuesday">Tuesday</label><br/>
+      <input id="wednesday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="wednesday">Wednesday</label><br/>
+      <input id="thursday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="thursday">Thursday</label><br/>
+      <input id="friday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="friday">Friday</label><br/>
+      <input id="saturday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="saturday">Saturday</label>
+      </fieldset>
     );
   }
 }
@@ -44,7 +43,7 @@ class DaysOfTheWeekSelector extends React.Component {
 class TimeSelector extends React.Component {
   render() {
     return (
-      <div>
+      <div className="time-selector">
       <select onChange={this.props.onChangeHours}>
         <option>06</option>
         <option>07</option>
@@ -82,7 +81,15 @@ class BeginEndTimeSelector extends React.Component {
       begin_minutes: "00",
       end_hours: "18",
       end_minutes: "00",
-      days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+      days: {
+        "sunday": true,
+        "monday": true,
+        "tuesday": true,
+        "wednesday": true,
+        "thursday": true,
+        "friday": true,
+        "saturday": true
+      }
     };
   }
 
@@ -103,11 +110,12 @@ class BeginEndTimeSelector extends React.Component {
   }
 
   updateDays(event) {
-    let newDays = [];
-    for (var i=0;i<event.target.options.length;i++) {
-      if (event.target.options[i].selected) {
-        newDays.push(event.target.options[i].value);
-      }
+    let newDays = Object.assign({}, this.state.days);
+    let day = event.target.id;
+    if (event.target.checked) {
+      newDays[day] = true;
+    } else {
+      newDays[day] = false;
     }
     this.setState({days: newDays});
   }
@@ -121,16 +129,22 @@ class BeginEndTimeSelector extends React.Component {
   render() {
     return (
       <div>
+      <p>
       Begin time: <TimeSelector
         hours={this.state.begin_hours} minutes={this.state.begin_minutes}
         onChangeHours={(event) => this.updateBeginHours(event)}
         onChangeMinutes={(event) => this.updateBeginMinutes(event)}/>
+      </p>
+      <p>
       End time: <TimeSelector
        hours={this.state.end_hours} minutes={this.state.end_minutes}
         onChangeHours={(event) => this.updateEndHours(event)}
         onChangeMinutes={(event) => this.updateEndMinutes(event)} />
-      Days of the week: <DaysOfTheWeekSelector days={this.state.days}
-       onChange={(event) => this.updateDays(event)}/>
+      </p>
+      <p>
+      <DaysOfTheWeekSelector days={this.state.days}
+       onChange={(event) => this.updateDays(event)}/><br/>
+      </p>
       <button onClick={() => this.addRecord()}>Add</button>
       </div>
     );
@@ -140,9 +154,10 @@ class BeginEndTimeSelector extends React.Component {
 class AvailableTime extends React.Component {
   render() {
     return (
-      <div className="available-time">
-      06:00 - 20:00 Sunday, Monday, Tuesday, Thursday, Friday, Saturday
-      </div>
+      <p className="available-time">
+      06:00-20:00 Sunday, Monday, Tuesday, Thursday, Friday, Saturday
+      <button className="remove-button">X</button>
+      </p>
     );
   }
 }
@@ -153,14 +168,49 @@ class Gym extends React.Component {
       <div className="gym">
       <CloseButton onClick={this.props.switchToMap}/>
 
-      <h3>Gym Name ({this.props.id})</h3>
+      <h3>{this.props.name}</h3>
+      <hr/>
       <RaidingPeople />
-      You're available to raid at the following times:
-      <AvailableTime />
+      <hr/>
+
+      <h4>
+      You're available to raid at the following times
+      </h4>
+      <ul>
+      <li><AvailableTime /></li>
+      </ul>
+      <hr/>
+
+      <h4>
+      Add a time you're available to raid:
+      </h4>
       <BeginEndTimeSelector />
       </div>
     );
   }
+}
+
+class Logo extends React.Component {
+  render() {
+    return (
+      <img className="logo" title="Raid Alert" alt="Raid Alert Logo"
+       src="raid.png" onClick={this.props.switchToAbout}/>
+    );
+  }
+}
+
+class About extends React.Component {
+  render() {
+    return (
+      <div className="about">
+      <CloseButton onClick={this.props.switchToMap}/>
+
+      <h3>About Raid Alert</h3>
+      Lorem ipsum
+      </div>
+    );
+  }
+
 }
 
 class App extends React.Component {
@@ -175,13 +225,13 @@ class App extends React.Component {
         context.setState({gyms: response});
       };
     }
-    fetch('https://2p4dfem1ol.execute-api.us-east-1.amazonaws.com/test/gym',
+    fetch('https://dx4.org/raidalert/gym.php',
      {credentials: 'include'})
       .then(function(response) {
         if (response.ok) {
           return response.json();
         } else {
-          document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2F2p4dfem1ol.execute-api.us-east-1.amazonaws.com%2Ftest%2Foauth&response_type=code&scope=identify%20guilds'
+          document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
         }
       })
       .then(make_handler(this));
@@ -200,36 +250,62 @@ class App extends React.Component {
     this.setState({screen: "map"});
   }
 
+  switchToAbout() {
+    this.setState({screen: "about"});
+  }
+
   render() {
-    if (this.state.screen === "map") {
-      var markers = [];
-      // Weird hack to get around defining function in a loop
-      function make_handler(gymid, context) {
-        return function () {
-          context.switchToGym(gymid);
-        };
-      }
-      for (var i=0;i<this.state.gyms.length;i++) {
-        markers.push(<Marker key={this.state.gyms[i][0]} anchor={[this.state.gyms[i][3], this.state.gyms[i][2]]} payload={1}
-         onClick={make_handler(this.state.gyms[i][0], this)} />);
-      }
-      return (
-        <div className="full-screen">
-          <Map center={[37.770284, -122.449123]} zoom={13}
-           provider={this.provider}>
-            {markers}
-          </Map>
-        </div>
-      );
-    } else if (this.state.screen === "gym") {
-      return (
+    var markers = [];
+    var ret;
+    // Weird hack to get around defining function in a loop
+    function make_handler(gymid, gymname, context) {
+      return function () {
+        context.switchToGym(gymid, gymname);
+      };
+    }
+    for (var i=0;i<this.state.gyms.length;i++) {
+      markers.push(<Marker key={this.state.gyms[i]['gid']} anchor={[this.state.gyms[i]['lng'], this.state.gyms[i]['lat']]} payload={1}
+       onClick={make_handler(this.state.gyms[i]['gid'], this.state.gyms[i]['name'], this)} />);
+    }
+    ret = (
+      <div className="full-screen">
+        <Map center={[37.770284, -122.449123]} zoom={13}
+         provider={this.provider}>
+          {markers}
+        </Map>
+        <Logo switchToAbout={() => this.switchToAbout()} />
+      </div>
+    );
+    if (this.state.screen === "gym") {
+      ret =(
+        <div>
+        {ret}
+        <div className="dim">
+        <div className="overlay">
         <Gym
           id={this.state.gymid}
           name={this.state.gymName}
           switchToMap={() => this.switchToMap()}
         />
+        </div>
+        </div>
+        </div>
+      );
+    } else if (this.state.screen === "about") {
+      ret =(
+        <div>
+        {ret}
+        <div className="dim">
+        <div className="overlay">
+        <About
+          switchToMap={() => this.switchToMap()}
+        />
+        </div>
+        </div>
+        </div>
       );
     }
+    return ret;
   }
 }
 
