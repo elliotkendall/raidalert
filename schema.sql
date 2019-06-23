@@ -9,10 +9,10 @@ PRIMARY KEY (gid));
 
 CREATE TABLE availability (
 user bigint unsigned not null,
-gid int(11) unsigned not null,
+gid bigint unsigned not null,
 start tinyint(4) unsigned NOT NULL,
 stop tinyint(4) unsigned NOT NULL,
-days bit(7) DEFAULT b'0',
+days tinyint(7) DEFAULT 0,
 key user(user),
 key gid(gid)
 );
