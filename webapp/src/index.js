@@ -44,7 +44,7 @@ class TimeSelector extends React.Component {
   render() {
     return (
       <div className="time-selector">
-      <select onChange={this.props.onChangeHours}>
+      <select onChange={this.props.onChange}>
         <option>06</option>
         <option>07</option>
         <option>08</option>
@@ -61,13 +61,6 @@ class TimeSelector extends React.Component {
         <option>19</option>
         <option>20</option>
       </select>
-      :
-      <select onChange={this.props.onChangeMinutes}>
-        <option>00</option>
-        <option>15</option>
-        <option>30</option>
-        <option>45</option>
-      </select>
       </div>
     );
   }
@@ -77,10 +70,9 @@ class BeginEndTimeSelector extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      begin_hours: "06",
-      begin_minutes: "00",
-      end_hours: "18",
-      end_minutes: "00",
+      gid: props.gid,
+      begin: "06",
+      end: "18",
       days: {
         "sunday": true,
         "monday": true,
@@ -93,20 +85,12 @@ class BeginEndTimeSelector extends React.Component {
     };
   }
 
-  updateBeginHours(event) {
-    this.setState({begin_hours: event.target.value});
+  updateBegin(event) {
+    this.setState({begin: event.target.value});
   }
 
-  updateBeginMinutes(event) {
-    this.setState({begin_minutes: event.target.value});
-  }
-
-  updateEndHours(event) {
-    this.setState({end_hours: event.target.value});
-  }
-
-  updateEndMinutes(event) {
-    this.setState({end_minutes: event.target.value});
+  updateEnd(event) {
+    this.setState({end: event.target.value});
   }
 
   updateDays(event) {
@@ -121,9 +105,30 @@ class BeginEndTimeSelector extends React.Component {
   }
 
   addRecord() {
-    alert("Starting at " + this.state.begin_hours + ":" + this.state.begin_minutes
-     + " and ending at " + this.state.end_hours + ":" + this.state.end_minutes
-     + " on " + this.state.days.toString());
+    function make_handler(context) {
+      return function (response) {
+        console.log({info: response});
+      };
+    }
+    fetch('https://dx4.org/raidalert/gym.php',
+     {
+      credentials: 'include',
+      mode: 'no-cors',
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(this.state),
+     })
+      .then(function(response) {
+        if (response.ok) {
+          return response.json();
+        } else {
+          document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+        }
+      })
+      .then(make_handler(this));
+//    alert("Starting at " + this.state.begin_hours + ":" + this.state.begin_minutes
+//     + " and ending at " + this.state.end_hours + ":" + this.state.end_minutes
+//     + " on " + this.state.days.toString());
   }
 
   render() {
@@ -131,15 +136,13 @@ class BeginEndTimeSelector extends React.Component {
       <div>
       <p>
       Begin time: <TimeSelector
-        hours={this.state.begin_hours} minutes={this.state.begin_minutes}
-        onChangeHours={(event) => this.updateBeginHours(event)}
-        onChangeMinutes={(event) => this.updateBeginMinutes(event)}/>
+        time={this.state.begin}
+        onChange={(event) => this.updateBegin(event)}/>
       </p>
       <p>
       End time: <TimeSelector
-       hours={this.state.end_hours} minutes={this.state.end_minutes}
-        onChangeHours={(event) => this.updateEndHours(event)}
-        onChangeMinutes={(event) => this.updateEndMinutes(event)} />
+       time={this.state.end_hours}
+        onChange={(event) => this.updateEnd(event)} />
       </p>
       <p>
       <DaysOfTheWeekSelector days={this.state.days}
@@ -163,12 +166,35 @@ class AvailableTime extends React.Component {
 }
 
 class Gym extends React.Component {
+  constructor(props) {
+    console.log(props.id.toString());
+    super(props);
+    this.state = {
+      info: {},
+    };
+    function make_handler(context) {
+      return function (response) {
+        context.setState({info: response});
+      };
+    }
+    fetch('https://dx4.org/raidalert/gym.php?id=' + props.id.toString(),
+     {credentials: 'include'})
+      .then(function(response) {
+        if (response.ok) {
+          return response.json();
+        } else {
+          document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+        }
+      })
+      .then(make_handler(this));
+  }
+
   render() {
     return (
       <div className="gym">
       <CloseButton onClick={this.props.switchToMap}/>
 
-      <h3>{this.props.name}</h3>
+      <h3>{this.props.name} ({this.props.id})</h3>
       <hr/>
       <RaidingPeople />
       <hr/>
@@ -184,7 +210,7 @@ class Gym extends React.Component {
       <h4>
       Add a time you're available to raid:
       </h4>
-      <BeginEndTimeSelector />
+      <BeginEndTimeSelector gid={this.props.id} />
       </div>
     );
   }
@@ -264,8 +290,12 @@ class App extends React.Component {
       };
     }
     for (var i=0;i<this.state.gyms.length;i++) {
-      markers.push(<Marker key={this.state.gyms[i]['gid']} anchor={[this.state.gyms[i]['lng'], this.state.gyms[i]['lat']]} payload={1}
-       onClick={make_handler(this.state.gyms[i]['gid'], this.state.gyms[i]['name'], this)} />);
+      markers.push(<Marker
+       key={this.state.gyms[i]['gid']}
+       anchor={[this.state.gyms[i]['lng'], this.state.gyms[i]['lat']]}
+       payload={1}
+       onClick={make_handler(this.state.gyms[i]['gid'], this.state.gyms[i]['name'], this)}
+      />);
     }
     ret = (
       <div className="full-screen">
