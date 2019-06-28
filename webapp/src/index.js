@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Map from 'pigeon-maps'
-import Marker from 'pigeon-marker'
+//import Marker from 'pigeon-marker'
 import './index.css';
 
 class CloseButton extends React.Component {
@@ -13,11 +13,32 @@ class CloseButton extends React.Component {
 }
 
 class RaidingPeople extends React.Component {
+  constructor(props) {
+    super(props);
+    if (props.now !== undefined && props.next !== undefined)
+    this.state = {
+      now: props.now.join("><"),
+      next: props.next.join("><"),
+    };
+  }
+  
   render() {
+    let now = "";
+    let next = "";
+    if (this.props.now !== undefined && this.props.now.length > 0) {
+      now = "<@" + this.props.now.join("> <@") + ">";
+    }
+    if (this.props.next !== undefined && this.props.next.length > 0) {
+      next = "<@" + this.props.next.join("> <@") + ">";
+    }
     return (
       <div>
-      <h4>The following people may be available to raid here now</h4>
-      <input readOnly="readOnly" value="foo bar baz"/>
+      <h4>The following people may be available to raid here until the top
+      of the hour</h4>
+      <input className="copyusers" readOnly="readOnly" value={now}/>
+      <h4>The following people may be available to raid here during the next
+      hour</h4>
+      <input className="copyusers" readOnly="readOnly" value={next}/>
       </div>
     );
   }
@@ -28,13 +49,13 @@ class DaysOfTheWeekSelector extends React.Component {
     return (
       <fieldset>
       <legend>Days of the week</legend>
-      <input id="sunday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="sunday">Sunday</label><br/>
-      <input id="monday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="monday">Monday</label><br/>
-      <input id="tuesday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="tuesday">Tuesday</label><br/>
-      <input id="wednesday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="wednesday">Wednesday</label><br/>
-      <input id="thursday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="thursday">Thursday</label><br/>
-      <input id="friday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="friday">Friday</label><br/>
-      <input id="saturday" checked="checked" type="checkbox" onChange={this.props.onChange} /> <label htmlFor="saturday">Saturday</label>
+      <input id="sunday" checked={this.props.days.sunday} type="checkbox" onChange={this.props.onChange} /> <label htmlFor="sunday">Sunday</label><br/>
+      <input id="monday" checked={this.props.days.monday} type="checkbox" onChange={this.props.onChange} /> <label htmlFor="monday">Monday</label><br/>
+      <input id="tuesday" checked={this.props.days.tuesday} type="checkbox" onChange={this.props.onChange} /> <label htmlFor="tuesday">Tuesday</label><br/>
+      <input id="wednesday" checked={this.props.days.wednesday} type="checkbox" onChange={this.props.onChange} /> <label htmlFor="wednesday">Wednesday</label><br/>
+      <input id="thursday" checked={this.props.days.thursday} type="checkbox" onChange={this.props.onChange} /> <label htmlFor="thursday">Thursday</label><br/>
+      <input id="friday" checked={this.props.days.friday} type="checkbox" onChange={this.props.onChange} /> <label htmlFor="friday">Friday</label><br/>
+      <input id="saturday" checked={this.props.days.saturday} type="checkbox" onChange={this.props.onChange} /> <label htmlFor="saturday">Saturday</label>
       </fieldset>
     );
   }
@@ -44,7 +65,7 @@ class TimeSelector extends React.Component {
   render() {
     return (
       <div className="time-selector">
-      <select onChange={this.props.onChange}>
+      <select value={this.props.time} onChange={this.props.onChange}>
         <option>06</option>
         <option>07</option>
         <option>08</option>
@@ -66,13 +87,13 @@ class TimeSelector extends React.Component {
   }
 }
 
-class BeginEndTimeSelector extends React.Component {
+class StartStopTimeSelector extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       gid: props.gid,
-      begin: "06",
-      end: "18",
+      start: "06",
+      stop: "18",
       days: {
         "sunday": true,
         "monday": true,
@@ -85,12 +106,12 @@ class BeginEndTimeSelector extends React.Component {
     };
   }
 
-  updateBegin(event) {
-    this.setState({begin: event.target.value});
+  updateStart(event) {
+    this.setState({start: event.target.value});
   }
 
-  updateEnd(event) {
-    this.setState({end: event.target.value});
+  updateStop(event) {
+    this.setState({stop: event.target.value});
   }
 
   updateDays(event) {
@@ -104,51 +125,24 @@ class BeginEndTimeSelector extends React.Component {
     this.setState({days: newDays});
   }
 
-  addRecord() {
-    function make_handler(context) {
-      return function (response) {
-        console.log({info: response});
-      };
-    }
-    fetch('https://dx4.org/raidalert/gym.php',
-     {
-      credentials: 'include',
-      mode: 'no-cors',
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(this.state),
-     })
-      .then(function(response) {
-        if (response.ok) {
-          return response.json();
-        } else {
-          document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
-        }
-      })
-      .then(make_handler(this));
-//    alert("Starting at " + this.state.begin_hours + ":" + this.state.begin_minutes
-//     + " and ending at " + this.state.end_hours + ":" + this.state.end_minutes
-//     + " on " + this.state.days.toString());
-  }
-
   render() {
     return (
       <div>
-      <p>
-      Begin time: <TimeSelector
-        time={this.state.begin}
-        onChange={(event) => this.updateBegin(event)}/>
-      </p>
-      <p>
-      End time: <TimeSelector
-       time={this.state.end_hours}
-        onChange={(event) => this.updateEnd(event)} />
-      </p>
-      <p>
+      <div>
+      Start time: <TimeSelector
+        time={this.state.start}
+        onChange={(event) => this.updateStart(event)}/>
+      </div>
+      <div>
+      Stop time: <TimeSelector
+       time={this.state.stop}
+        onChange={(event) => this.updateStop(event)} />
+      </div>
+      <div>
       <DaysOfTheWeekSelector days={this.state.days}
        onChange={(event) => this.updateDays(event)}/><br/>
-      </p>
-      <button onClick={() => this.addRecord()}>Add</button>
+      </div>
+      <button onClick={(state) => this.props.addRecord(this.state)}>Add</button>
       </div>
     );
   }
@@ -156,37 +150,122 @@ class BeginEndTimeSelector extends React.Component {
 
 class AvailableTime extends React.Component {
   render() {
-    return (
-      <p className="available-time">
-      06:00-20:00 Sunday, Monday, Tuesday, Thursday, Friday, Saturday
-      <button className="remove-button">X</button>
-      </p>
-    );
+    if (this.props.times === undefined || this.props.times.length === 0) {
+      return (<div>None</div>);
+    }
+    let times = [];
+    let time;
+    // Weird hack to get around defining function in a loop
+    function make_handler(start, stop, days, context) {
+      return function () {
+        context.props.removeRecord(start, stop, days);
+      };
+    }
+    for(let i=0;i<this.props.times.length;i++) {
+      time = this.props.times[i];
+      times.push(
+      <li className="available-time" key={time.start.toString() + time.stop.toString() + time.days.toString()}>
+      {time.start}:00-{time.stop}:00 {time.days.join(", ")}
+      <button className="remove-button"
+       onClick={make_handler(time.start, time.stop, time.days, this)}>X</button>
+      </li>
+      );
+    }
+    return (<ul>{times}</ul>);
   }
 }
 
 class Gym extends React.Component {
   constructor(props) {
-    console.log(props.id.toString());
     super(props);
+    this.addRecord = this.addRecord.bind(this);
+    this.removeRecord = this.removeRecord.bind(this);
     this.state = {
       info: {},
     };
     function make_handler(context) {
       return function (response) {
-        context.setState({info: response});
+        context.setState({next: response.next, now: response.now, user: response.user});
       };
     }
     fetch('https://dx4.org/raidalert/gym.php?id=' + props.id.toString(),
      {credentials: 'include'})
-      .then(function(response) {
-        if (response.ok) {
-          return response.json();
-        } else {
-          document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+    .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      } else if (response.status === 403) {
+         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+      }
+      throw new Error(response.code);
+    })
+    .then(make_handler(this))
+    .catch(function(error) {
+      console.log('Fetch failed: ', error.message);
+    });
+  }
+
+  addRecord(state) {
+    function make_handler(context) {
+      return function (response) {
+        context.setState({next: response.next, now: response.now, user: response.user});
+        if (response.user.length > 0) {
+          context.props.setUserFlag();
         }
-      })
-      .then(make_handler(this));
+      };
+    }
+    fetch('https://dx4.org/raidalert/gym.php',
+     {
+      credentials: 'include',
+      mode: 'cors',
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(state),
+     })
+    .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      } else if (response.status === 403) {
+         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+      }
+      throw new Error(response.code);
+    })
+    .then(make_handler(this))
+    .catch(function(error) {
+      console.log('Fetch failed: ', error.message);
+    });
+  }
+
+  removeRecord(start, stop, days) {
+    function make_handler(context) {
+      return function (response) {
+        context.setState({next: response.next, now: response.now, user: response.user});
+        if (response.user.length < 1) {
+          context.props.clearUserFlag();
+        }
+      };
+    }
+    fetch('https://dx4.org/raidalert/gym.php',
+     {
+      credentials: 'include',
+      mode: 'cors',
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+       'start': start, 'stop': stop, 'days': days, 'gid': this.props.id
+      }),
+     })
+    .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      } else if (response.status === 403) {
+         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+      }
+      throw new Error(response.code);
+    })
+    .then(make_handler(this))
+    .catch(function(error) {
+      console.log('Fetch failed: ', error.message);
+    });
   }
 
   render() {
@@ -196,21 +275,19 @@ class Gym extends React.Component {
 
       <h3>{this.props.name} ({this.props.id})</h3>
       <hr/>
-      <RaidingPeople />
+      <RaidingPeople now={this.state.now} next={this.state.next}/>
       <hr/>
 
       <h4>
-      You're available to raid at the following times
+      You're available to raid here at the following times
       </h4>
-      <ul>
-      <li><AvailableTime /></li>
-      </ul>
+      <AvailableTime times={this.state.user} removeRecord={this.removeRecord}/>
       <hr/>
 
       <h4>
       Add a time you're available to raid:
       </h4>
-      <BeginEndTimeSelector gid={this.props.id} />
+      <StartStopTimeSelector gid={this.props.id} addRecord={this.addRecord}/>
       </div>
     );
   }
@@ -232,11 +309,62 @@ class About extends React.Component {
       <CloseButton onClick={this.props.switchToMap}/>
 
       <h3>About Raid Alert</h3>
-      Lorem ipsum
+      Raid Alert is a website that helps you coordinate raiding in Pokemon
+      Go with your friends on Discord.
+
+      <h3>How to use it</h3>
+      <ol>
+
+      <li>To log in, you need a Discord account and you need to be a
+      member of one or more of the servers we support.</li>
+
+      <li>Navigate around the map to find gyms that you are regularly able
+      to raid at. Open each one and define what days of the week and
+      times you are available. Gyms you have defined availability at are
+      shown in red.</li>
+
+      <li>When you are playing Pokemon Go and see a nearby raid you are
+      interested in, return to Raid Alert and open the matching gym.</li>
+
+      <li>You will see a list of Discord IDs of people who indicated that
+      they may be available to raid at this gym at this time.</li>
+
+      <li>Copy and paste the list into your Discord client to mention all of
+      the people who may be available to raid.  With luck, some of them will
+      respond to you and you can settle on a time to meet for the raid.</li>
+      </ol>
+
+      <h3>Supported Servers</h3>
+      Raid Alert current supports the following Pokemon Go Discord servers:
+      <ul>
+      <li><strong>SF Pogo Raids Meetup</strong>, San Francisco, California, USA</li>
+      </ul>
+      If you run a Pokemon Go server and would like Raid Alert to support
+      your area, please let me know - see below.
+
+      <h3>Contacting Me</h3>
+      You can find me, ToadstoolSpots, on my <a
+      href="https://discord.gg/QG9watn">Pokemon Go development Discord
+      Server</a>.
+
       </div>
     );
   }
 
+}
+
+class CustomMarker extends React.Component {
+  render() {
+    return (
+    <img onClick={this.props.onClick} style={{
+      position: 'absolute',
+      left: this.props.left - 15,
+      top: this.props.top - 30,
+    }}
+    alt={this.props.name}
+    title={this.props.name}
+    src={"pin" + this.props.color + ".png"}/>);
+  }
 }
 
 class App extends React.Component {
@@ -244,8 +372,12 @@ class App extends React.Component {
     super(props);
     this.state = {
       screen: "map",
+      lat: 37.770284,
+      lng: -122.449123,
+      zoom: 13,
       gyms: [],
     };
+    this.onBoundsChanged = this.onBoundsChanged.bind(this);
     function make_handler(context) {
       return function (response) {
         context.setState({gyms: response});
@@ -253,14 +385,18 @@ class App extends React.Component {
     }
     fetch('https://dx4.org/raidalert/gym.php',
      {credentials: 'include'})
-      .then(function(response) {
-        if (response.ok) {
-          return response.json();
-        } else {
-          document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
-        }
-      })
-      .then(make_handler(this));
+    .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      } else if (response.status === 403) {
+         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+      }
+      throw new Error(response.code);
+    })
+    .then(make_handler(this))
+    .catch(function(error) {
+      console.log('Fetch failed: ', error.message);
+    });
   }
 
   provider(x, y, z) {
@@ -280,6 +416,22 @@ class App extends React.Component {
     this.setState({screen: "about"});
   }
 
+  onBoundsChanged(bounds) {
+    this.setState({zoom: bounds.zoom, lat: bounds.center[0], lng: bounds.center[1]});
+  }
+
+  setUserFlag(gid) {
+    let gyms = this.state.gyms;
+    gyms[gid]['user'] = 1;
+    this.setState({gyms: gyms});
+  }
+
+  clearUserFlag(gid) {
+    let gyms = this.state.gyms;
+    gyms[gid]['user'] = 0;
+    this.setState({gyms: gyms});
+  }
+
   render() {
     var markers = [];
     var ret;
@@ -289,18 +441,19 @@ class App extends React.Component {
         context.switchToGym(gymid, gymname);
       };
     }
-    for (var i=0;i<this.state.gyms.length;i++) {
-      markers.push(<Marker
-       key={this.state.gyms[i]['gid']}
-       anchor={[this.state.gyms[i]['lng'], this.state.gyms[i]['lat']]}
-       payload={1}
-       onClick={make_handler(this.state.gyms[i]['gid'], this.state.gyms[i]['name'], this)}
+    for (var key in this.state.gyms) {
+      markers.push(<CustomMarker
+       key={key}
+       name={this.state.gyms[key]['name']}
+       anchor={[this.state.gyms[key]['lng'], this.state.gyms[key]['lat']]}
+       color={this.state.gyms[key]['user'] > 0 ? "red" : "blue" }
+       onClick={make_handler(key, this.state.gyms[key]['name'], this)}
       />);
     }
     ret = (
       <div className="full-screen">
-        <Map center={[37.770284, -122.449123]} zoom={13}
-         provider={this.provider}>
+        <Map center={[this.state.lat, this.state.lng]} zoom={this.state.zoom}
+         provider={this.provider} onBoundsChanged={this.onBoundsChanged}>
           {markers}
         </Map>
         <Logo switchToAbout={() => this.switchToAbout()} />
@@ -315,6 +468,8 @@ class App extends React.Component {
         <Gym
           id={this.state.gymid}
           name={this.state.gymName}
+          setUserFlag={() => this.setUserFlag(this.state.gymid)}
+          clearUserFlag={() => this.clearUserFlag(this.state.gymid)}
           switchToMap={() => this.switchToMap()}
         />
         </div>
