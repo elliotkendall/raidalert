@@ -1,6 +1,7 @@
 {
   "name": "raidalert",
   "version": "0.0.1",
+  "homepage": "https://dx4.org/raidalert",
   "private": true,
   "dependencies": {
     "pigeon-maps": "^0.11.8",
