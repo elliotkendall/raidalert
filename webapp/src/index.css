@@ -78,3 +78,7 @@ div.time-selector {
 select[multiple] {
   width: 200px;
 }
+
+input.copyusers {
+  width: 100%;
+}
