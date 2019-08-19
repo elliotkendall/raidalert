@@ -31,13 +31,16 @@ class RaidingPeople extends React.Component {
     if (this.props.next !== undefined && this.props.next.length > 0) {
       next = "<@" + this.props.next.join("> <@") + ">";
     }
+    let d = new Date();
+    d.setHours(d.getHours()+1);
+    let thisHour = d.getHours() + ":00";
+    d.setHours(d.getHours()+1);
+    let nextHour = d.getHours() + ":00";
     return (
       <div>
-      <h4>The following people may be available to raid here until the top
-      of the hour</h4>
+      <h4>The following people may be available to raid here until {thisHour}</h4>
       <input className="copyusers" readOnly="readOnly" value={now}/>
-      <h4>The following people may be available to raid here during the next
-      hour</h4>
+      <h4>The following people may be available to raid here between {thisHour} and {nextHour}</h4>
       <input className="copyusers" readOnly="readOnly" value={next}/>
       </div>
     );
@@ -93,7 +96,7 @@ class StartStopTimeSelector extends React.Component {
     this.state = {
       gid: props.gid,
       start: "06",
-      stop: "18",
+      stop: "20",
       days: {
         "sunday": true,
         "monday": true,
@@ -150,6 +153,14 @@ class StartStopTimeSelector extends React.Component {
 
 class AvailableTime extends React.Component {
   render() {
+    function capitalizeArray(a) {
+      let ret = [];
+      for(let i=0;i<a.length;i++) {
+        ret[i] = a[i].charAt(0).toUpperCase() + a[i].slice(1);
+      }
+      return ret;
+    }
+
     if (this.props.times === undefined || this.props.times.length === 0) {
       return (<div>None</div>);
     }
@@ -165,7 +176,7 @@ class AvailableTime extends React.Component {
       time = this.props.times[i];
       times.push(
       <li className="available-time" key={time.start.toString() + time.stop.toString() + time.days.toString()}>
-      {time.start}:00-{time.stop}:00 {time.days.join(", ")}
+      {time.start}:00-{time.stop}:00 {capitalizeArray(time.days).join(", ")}
       <button className="remove-button"
        onClick={make_handler(time.start, time.stop, time.days, this)}>X</button>
       </li>
