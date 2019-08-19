@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Map from 'pigeon-maps'
-//import Marker from 'pigeon-marker'
 import './index.css';
+import * as config from './config.js';
 
 class CloseButton extends React.Component {
   render() {
@@ -188,13 +188,13 @@ class Gym extends React.Component {
         context.setState({next: response.next, now: response.now, user: response.user});
       };
     }
-    fetch('https://dx4.org/raidalert/gym.php?id=' + props.id.toString(),
+    fetch(config.APIBASEURL + 'gym.php?id=' + props.id.toString(),
      {credentials: 'include'})
     .then(function(response) {
       if (response.ok) {
         return response.json();
       } else if (response.status === 403) {
-         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+         document.location = config.DISCORDAUTHURL;
       }
       throw new Error(response.code);
     })
@@ -213,7 +213,7 @@ class Gym extends React.Component {
         }
       };
     }
-    fetch('https://dx4.org/raidalert/gym.php',
+    fetch(config.APIBASEURL + 'gym.php',
      {
       credentials: 'include',
       mode: 'cors',
@@ -225,7 +225,7 @@ class Gym extends React.Component {
       if (response.ok) {
         return response.json();
       } else if (response.status === 403) {
-         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+         document.location = config.DISCORDAUTHURL;
       }
       throw new Error(response.code);
     })
@@ -244,7 +244,7 @@ class Gym extends React.Component {
         }
       };
     }
-    fetch('https://dx4.org/raidalert/gym.php',
+    fetch(config.APIBASEURL + 'gym.php',
      {
       credentials: 'include',
       mode: 'cors',
@@ -258,7 +258,7 @@ class Gym extends React.Component {
       if (response.ok) {
         return response.json();
       } else if (response.status === 403) {
-         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+         document.location = config.DISCORDAUTHURL;
       }
       throw new Error(response.code);
     })
@@ -383,13 +383,13 @@ class App extends React.Component {
         context.setState({gyms: response});
       };
     }
-    fetch('https://dx4.org/raidalert/gym.php',
+    fetch(config.APIBASEURL + 'gym.php',
      {credentials: 'include'})
     .then(function(response) {
       if (response.ok) {
         return response.json();
       } else if (response.status === 403) {
-         document.location = 'https://discordapp.com/api/oauth2/authorize?client_id=521793846577856513&redirect_uri=https%3A%2F%2Fdx4.org%2Fraidalert%2Foauth.php&response_type=code&scope=identify%20guilds';
+         document.location = config.DISCORDAUTHURL;
       }
       throw new Error(response.code);
     })
@@ -401,7 +401,7 @@ class App extends React.Component {
 
   provider(x, y, z) {
     const retina = typeof window !== 'undefined' && window.devicePixelRatio >= 2 ? '@2x' : '';
-    return `https://stamen-tiles.a.ssl.fastly.net/toner-lite/${z}/${x}/${y}${retina}.png`
+    return config.MAPPROVIDER + `${z}/${x}/${y}${retina}.png`
   };
 
   switchToGym(id, name) {
