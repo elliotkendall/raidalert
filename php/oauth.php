@@ -1,8 +1,8 @@
 <?php
 function __autoload($class_name) { include $class_name . '.php'; }
-set_include_path('/var/www/data/dx4.org/raidalert');
+set_include_path('lib');
 
-$config = new Config('config.json');
+require 'config.php';
 
 function fatal($message) {
   header('Content-type: text/json');
@@ -17,15 +17,15 @@ if (!isset($_GET['code'])) {
 $http = new HTTPClient();
 $http->setOptions(array(CURLOPT_HTTPHEADER => array('Content-Type: application/x-www-form-urlencoded')));
 $data = array(
-  'client_id' => $config->get('Client ID'),
-  'client_secret' => $config->get('Client secret'),
+  'client_id' => $config['Client ID'],
+  'client_secret' => $config['Client secret'],
   'grant_type' => 'authorization_code',
   'code' => $_GET['code'],
-  'redirect_uri' => $config->get('Redirect URI'),
+  'redirect_uri' => $config['Redirect URI'],
   'scope' => 'identify email connections'
 );
 try {
-  $response = $http->post($config->get('API endpoint') . '/oauth2/token', http_build_query($data));
+  $response = $http->post($config['API endpoint'] . '/oauth2/token', http_build_query($data));
 } catch (HTTPRequestException $e) {
   $response = json_decode($e->response, TRUE);
   if (isset($response['error_description'])) {
@@ -42,16 +42,16 @@ $token = $parsed['access_token'];
 $type = $parsed['token_type'];
 
 $http->setOptions(array(CURLOPT_HTTPHEADER => array('Authorization: Bearer ' . $token)));
-$response = $http->get($config->get('API endpoint') . '/users/@me');
+$response = $http->get($config['API endpoint'] . '/users/@me');
 $parsed = json_decode($response, TRUE);
 $userid = $parsed['id'];
 $username = $parsed['username'];
 
-$response = $http->get($config->get('API endpoint') . '/users/@me/guilds');
+$response = $http->get($config['API endpoint'] . '/users/@me/guilds');
 $userguilds = json_decode($response, TRUE);
 
-$db = new RaidAlertDatabase($config->get('Database user'),
- $config->get('Database password'), $config->get('Database name'));
+$db = new RaidAlertDatabase($config['Database user'],
+ $config['Database password'], $config['Database name']);
 $guilds = $db->getGuilds();
 
 $filteredUserGuilds = array();
@@ -66,10 +66,10 @@ if (count($filteredUserGuilds) < 1) {
 }
 
 # We got everything we need to log the user in
-Session::start($config->get('Session cookie name'), FALSE);
+Session::start($config['Session cookie name'], FALSE);
 $_SESSION['userid'] = $userid;
 $_SESSION['username'] = $username;
 $_SESSION['guilds'] = $filteredUserGuilds;
 $_SESSION['current_guild'] = array_keys($filteredUserGuilds)[0];
 
-header('Location: ' . $config->get('App URL'));
+header('Location: ' . $config['App URL']);

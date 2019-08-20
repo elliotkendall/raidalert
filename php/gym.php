@@ -1,10 +1,10 @@
 <?php
 function __autoload($class_name) { include $class_name . '.php'; }
-set_include_path('/var/www/data/dx4.org/raidalert');
+set_include_path('lib');
 
-$config = new Config('config.json');
-$db = new RaidAlertDatabase($config->get('Database user'),
- $config->get('Database password'), $config->get('Database name'));
+require 'config.php';
+$db = new RaidAlertDatabase($config['Database user'],
+ $config['Database password'], $config['Database name']);
 
 header('Access-Control-Allow-Origin: http://localhost:3000');
 header('Access-Control-Allow-Credentials: true');
@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
   header('Access-Control-Allow-Methods: GET, POST, DELETE');
   exit;
 }
-Session::start($config->get('Session cookie name'));
+Session::start($config['Session cookie name']);
 
 try {
   if (isset($_GET['id']) && is_numeric($_GET['id'])) {
