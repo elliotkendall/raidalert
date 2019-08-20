@@ -1,5 +1,6 @@
 const discordClientID = '521793846577856513';
-export const MAPPROVIDER = 'https://stamen-tiles.a.ssl.fastly.net/toner-lite/';
+export const MAPPROVIDER = 'https://maps.wikimedia.org/osm-intl/';
+//export const MAPPROVIDER = 'https://stamen-tiles.a.ssl.fastly.net/toner-lite/';
 const productionHostname = 'dx4.org';
 const productionAPIBaseURL = 'https://dx4.org/raidalert/';
 const developmentAPIBaseURL = 'https://dx4.org/raidalert-dev/';
