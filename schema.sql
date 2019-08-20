@@ -35,9 +35,3 @@ zoom tinyint unsigned not null,
 tz varchar(255) not null,
 primary key(guildid)
 );
-insert into guild (guildid, name, lat, lng, zoom, tz)
-values
-(327182560566444033, 'SF PoGo Raids Meetup', -122.449123, 37.770284, 13, 'America/Los_Angeles');
-
-grant select on raidalert.guild to oauth;
-grant insert on raidalert.session to oauth;
