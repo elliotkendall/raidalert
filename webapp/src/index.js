@@ -95,26 +95,20 @@ class StartStopTimeSelector extends React.Component {
     super(props);
     this.state = {
       gid: props.gid,
-      start: "06",
-      stop: "20",
-      days: {
-        "sunday": true,
-        "monday": true,
-        "tuesday": true,
-        "wednesday": true,
-        "thursday": true,
-        "friday": true,
-        "saturday": true
-      }
+      start: props.times.start,
+      stop: props.times.stop,
+      days: props.times.days
     };
   }
 
   updateStart(event) {
     this.setState({start: event.target.value});
+    this.props.updateLastTimes({start: event.target.value});
   }
 
   updateStop(event) {
     this.setState({stop: event.target.value});
+    this.props.updateLastTimes({stop: event.target.value});
   }
 
   updateDays(event) {
@@ -126,6 +120,7 @@ class StartStopTimeSelector extends React.Component {
       newDays[day] = false;
     }
     this.setState({days: newDays});
+    this.props.updateLastTimes({days: newDays});
   }
 
   render() {
@@ -298,7 +293,8 @@ class Gym extends React.Component {
       <h4>
       Add a time you're available to raid:
       </h4>
-      <StartStopTimeSelector gid={this.props.id} addRecord={this.addRecord}/>
+      <StartStopTimeSelector gid={this.props.id} times={this.props.times}
+       addRecord={this.addRecord} updateLastTimes={this.props.updateLastTimes}/>
       </div>
     );
   }
@@ -381,11 +377,25 @@ class CustomMarker extends React.Component {
 class App extends React.Component {
   constructor(props) {
     super(props);
+    this.updateLastTimes = this.updateLastTimes.bind(this);
     this.state = {
       screen: "map",
       lat: 37.770284,
       lng: -122.449123,
       zoom: 13,
+      lastTimes: {
+        start: "06",
+        stop: "20",
+        days: {
+          "sunday": true,
+          "monday": true,
+          "tuesday": true,
+          "wednesday": true,
+          "thursday": true,
+          "friday": true,
+          "saturday": true
+        }
+      },
       gyms: [],
     };
     this.onBoundsChanged = this.onBoundsChanged.bind(this);
@@ -443,6 +453,14 @@ class App extends React.Component {
     this.setState({gyms: gyms});
   }
 
+  updateLastTimes(times) {
+    let newTimes = this.state.lastTimes;
+    Object.keys(times).forEach(function(key) {
+      newTimes[key] = times[key];
+    });
+    this.setState({lastTimes: newTimes});
+  }
+
   render() {
     var markers = [];
     var ret;
@@ -479,8 +497,10 @@ class App extends React.Component {
         <Gym
           id={this.state.gymid}
           name={this.state.gymName}
+          times={this.state.lastTimes}
           setUserFlag={() => this.setUserFlag(this.state.gymid)}
           clearUserFlag={() => this.clearUserFlag(this.state.gymid)}
+          updateLastTimes={this.updateLastTimes}
           switchToMap={() => this.switchToMap()}
         />
         </div>
