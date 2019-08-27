@@ -10,17 +10,6 @@ PRIMARY KEY (gid));
 CREATE TABLE availability (
 user bigint unsigned not null,
 gid bigint unsigned not null,
-start tinyint(4) unsigned NOT NULL,
-stop tinyint(4) unsigned NOT NULL,
-days tinyint(7) DEFAULT 0,
-key user(user),
-key gid(gid),
-primary key (user, gid, start, stop, days)
-);
-
-CREATE TABLE availability2 (
-user bigint unsigned not null,
-gid bigint unsigned not null,
 weekend tinyint(4) DEFAULT 0,
 weekdaydaytime tinyint(4) DEFAULT 0,
 weekdayevening tinyint(4) DEFAULT 0,
