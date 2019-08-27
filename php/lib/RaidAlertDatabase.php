@@ -5,14 +5,20 @@ class RaidAlertDatabase extends MySQLDatabase {
   function __construct($dbuser, $dbpass, $dbname, $dbhost = NULL) {
     parent::__construct($dbuser, $dbpass, $dbname, $dbhost);
 
-    $this->addRecordQuery = new MySQLQuery($this, '
-insert into availability (user, gid, start, stop, days) values (?, ?, ?, ?, ?)');
+    $this->updateAvailabilityQuery = new MySQLQuery($this, '
+insert into availability (user, gid, weekend, weekdaydaytime, weekdayevening)
+values (?, ?, ?, ?, ?)
+on duplicate key update
+weekend=?,
+weekdaydaytime=?,
+weekdayevening=?
+');
 
-    $this->removeRecordQuery = new MySQLQuery($this, '
-delete from availability where user=? and gid=? and start=? and stop=? and days=?');
+    $this->deleteAvailabilityQuery = new MySQLQuery($this, '
+delete from availability where user=? and gid=?');
 
     $this->gymQuery = new MySQLQuery($this, '
-select user, start, stop, days from availability where gid=?');
+select user, weekend, weekdaydaytime, weekdayevening from availability where gid=?');
 
     $this->gymsByGuildQuery = new MySQLQuery($this, '
 select gym.gid as gid, name, lat, lng, count(distinct user) as user
@@ -27,70 +33,50 @@ group by gid');
 select * from guild');
   }
 
-  function addRecord($user, $gid, $begin, $end, $days) {
-    $this->addRecordQuery->bindParameters(array('types' => 'iiiii',
-     'values' => array($user, $gid, $begin, $end, self::daysArrayToInt($days))));
-    $this->addRecordQuery->execute();
-  }
-
-  function removeRecord($user, $gid, $begin, $end, $days) {
-    $this->removeRecordQuery->bindParameters(array('types' => 'iiiii',
-     'values' => array($user, $gid, $begin, $end, self::daysArrayToInt($days))));
-    $this->removeRecordQuery->execute();
-  }
-
-  static function daysArrayToInt($days) {
-    $i=0;
-    $ret=0;
-    foreach(array('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday') as $day) {
-      if (in_array($day, $days)) {
-        $ret += pow(2, $i);
-      }
-      $i++;
+  function updateAvailability($user, $gid, $weekend, $weekdaydaytime, $weekdayevening) {
+    if ($weekend || $weekdaydaytime || $weekdayevening) {
+      $this->updateAvailabilityQuery->bindParameters(array('types' => 'iiiiiiii',
+       'values' => array($user, $gid, $weekend, $weekdaydaytime, $weekdayevening, $weekend, $weekdaydaytime, $weekdayevening)));
+      $this->updateAvailabilityQuery->execute();
+    } else {
+      $this->deleteAvailabilityQuery->bindParameters(array('types' => 'ii',
+       'values' => array($user, $gid)));
+      $this->deleteAvailabilityQuery->execute();
     }
-    return $ret;
-  }
-
-  static function daysIntToArray($int) {
-    $i=0;
-    $ret=array();
-    foreach(array('sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday') as $day) {
-      $pow = pow(2, $i);
-      if (($int & $pow) == $pow) {
-        $ret[] = $day;
-      }
-      $i++;
-    }
-    return $ret;
-  
   }
 
   function getAvailability($gid, $uid) {
     $this->gymQuery->bindParameters(array('types' => 'i',
      'values' => array($gid)));
-    $today = strtolower(date('l'));
-    $availnow = array();
-    $availnext = array();
-    $myrows = array();
-    $now = date('H');
-    $next = date('H', time() + 3600);
-    foreach($this->gymQuery->execute() as $row) {
-      if ($row['user'] == $uid) {
-        $row['days'] = self::daysIntToArray($row['days']);
-        $myrows[] = $row;
-        continue;
-      }
-      $days = self::daysIntToArray($row['days']);
-      if (in_array($today, $days)) {
-        if ($row['start'] <= $now && $now <= $row['stop']) {
-          $availnow[] = strval($row['user']);
-        }
-        if ($row['start'] <= $next && $next <= $row['stop']) {
-          $availnext[] = strval($row['user']);
-        }
+
+    if (in_array(date('l'), array('Saturday', 'Sunday'))) {
+      $now = 'weekend';
+    } else {
+      if (date('H') >= 17) {
+        $now = 'weekdayevening';
+      } else {
+        $now = 'weekdaydaytime';
       }
     }
-    return array('now' => $availnow, 'next' => $availnext, 'user' => $myrows);
+
+    $users = array();
+    $myavail = array(
+     'weekend' => 0,
+     'weekdaydaytime' => 0,
+     'weekdayevening' => 0);
+    foreach($this->gymQuery->execute() as $row) {
+      if ($row['user'] == $uid) {
+        $myavail = array(
+         'weekend' => $row['weekend'],
+         'weekdaydaytime' => $row['weekdaydaytime'],
+         'weekdayevening' => $row['weekdayevening']);
+        continue;
+      }
+      if ($row[$now] == 1) {
+        $users[] = $row['user'];
+      }
+    }
+    return array('availability' => $users, 'self' => $myavail);
   }
 
   function getGymsByGuild($guild, $uid) {

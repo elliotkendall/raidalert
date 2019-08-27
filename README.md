@@ -6,8 +6,8 @@ to raid at specific Pokemon Go gyms at particular times.
 
  - Lets users log in with Discord credentials via OAuth
 
- - Users can set availability one or more gyms at any time(s) and day(s) of
-   the week
+ - Users can set availability one or more gyms at any of three pre-defined
+   times: weekends, weekdays during the day, and weekday evenings
 
  - Creates notification messages ready to be pasted into Discord
 

@@ -19,31 +19,16 @@ Session::start($config['Session cookie name']);
 try {
   if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     print json_encode($db->getAvailability($_GET['id'], $_SESSION['userid']));
-  } else if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
-    $data = json_decode(file_get_contents('php://input'), true);
-    $db->removeRecord(
-     $_SESSION['userid'],
-     intval($data['gid']),
-     intval($data['start']),
-     intval($data['stop']),
-     $data['days']);
-    print json_encode($db->getAvailability($data['gid'], $_SESSION['userid']));
   } else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    $days = array();
-    foreach ($data['days'] as $day => $bool) {
-      if ($bool) {
-        $days[] = $day;
-      }
-    }
-
-    $db->addRecord(
+    $db->updateAvailability(
      $_SESSION['userid'],
      intval($data['gid']),
-     intval($data['start']),
-     intval($data['stop']),
-     $days);
+     $data['weekend'],
+     $data['weekdaydaytime'],
+     $data['weekdayevening']
+    );
     print json_encode($db->getAvailability($data['gid'], $_SESSION['userid']));
   } else {
     print json_encode($db->getGymsByGuild($_SESSION['current_guild'], $_SESSION['userid']));

@@ -3,6 +3,54 @@ body {
   margin: 20px;
 }
 
+div#gymtitle {
+  font-weight: bold;
+  height: 1em;
+  overflow: hidden;
+}
+
+fieldset {
+  margin: 0px;
+  padding: 0px;
+  border: none;
+}
+
+div.gym {
+  position: absolute;
+  background-color: white;
+  border-radius: 25px;
+  padding: 15px;
+  height: 100px;
+  width: 200px;
+  z-index: 1;
+}
+
+input.copyusers {
+  margin-top: 2px;
+}
+
+input.nousers {
+  margin-top: 2px;
+  color: #777777;
+  font-style: oblique;
+}
+
+input.alignright {
+  position: absolute;
+  right: 70px;
+}
+
+div.gym:before {
+    content: "";
+    position: absolute;
+    top: 120%;
+    margin-top: -26px;
+    left: 15%;
+    border: solid 15px transparent;
+    border-top-color: #FFF;
+    z-index: 1;
+}
+
 div.full-screen {
   position: absolute;
   top: 0;
@@ -41,6 +89,7 @@ div.dim {
   bottom: 3px;
   left: 0;
   background: rgba(255, 255, 255, 0.5);
+  z-index: 2;
 }
 
 img.logo {
