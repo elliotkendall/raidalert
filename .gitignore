@@ -14,8 +14,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -105,3 +103,14 @@ venv.bak/
 
 /notes
 /my-app
+
+*~
+NOTES
+TODO
+copy-from-dev.sh
+parse-pogomap.php
+push-to-prod.sh
+webapp/build.tar.gz
+webapp/package-lock.json
+pogomap.json
+pogomap.smartimport
