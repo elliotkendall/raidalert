@@ -12,6 +12,26 @@ class CloseButton extends React.Component {
   }
 }
 
+class NewGym extends React.Component {
+  focusInput(event) {
+    event.target.select();
+  }
+  render() {
+    return (
+    <div style={{
+      left: this.props.left - 50,
+      top: this.props.top - 94,
+    }} className="newgym">
+    <CloseButton onClick={this.props.closeNewGym}/>
+    <input id="newgymname" placeholder="Gym name" onClick={this.focusInput}/>
+    <br/>
+    <button type="button" onClick={this.props.addGym}>Save</button>
+    <button type="button" onClick={this.props.closeNewGym}>Cancel</button>
+    </div>
+    );
+  }
+}
+
 class Gym extends React.Component {
   constructor(props) {
     super(props);
@@ -24,7 +44,11 @@ class Gym extends React.Component {
     };
     function make_handler(context) {
       return function (response) {
-        context.setState({availability: response.availability, user: response.self});
+        if (response.error) {
+          context.setState({error: response.error});
+        } else {
+          context.setState({availability: response.availability, user: response.self});
+        }
       };
     }
     fetch(config.APIBASEURL + 'gym.php?id=' + props.id.toString(),
@@ -62,12 +86,16 @@ class Gym extends React.Component {
 
     function make_handler(context) {
       return function (response) {
-        context.setState({user: response.self});
-        if (response.self.weekend || response.self.weekdaydaytime
-         || response.self.weekdayevening) {
-          context.props.setUserFlag();
+        if (response.error) {
+          context.setState({error: response.error});
         } else {
-          context.props.clearUserFlag();
+          context.setState({user: response.self});
+          if (response.self.weekend || response.self.weekdaydaytime
+           || response.self.weekdayevening) {
+            context.props.setUserFlag();
+          } else {
+            context.props.clearUserFlag();
+          }
         }
       };
     }
@@ -112,25 +140,25 @@ class Gym extends React.Component {
     return (
     <div style={{
       left: this.props.left - 50,
-      top: this.props.top - 154,
+      top: this.props.top - 174,
     }} className="gym">
     <CloseButton onClick={this.props.switchToMap}/>
       <div id="gymtitle">{this.props.name} ({this.props.id})</div>
       <fieldset>
-      <label for="selectall">Select All</label>
+      <label htmlFor="selectall">Select All</label>
       <input id="selectall" onChange={this.handleSelectAll}
        className="alignright" type="checkbox"
        checked={this.state.user.weekend && this.state.user.weekdaydaytime && this.state.user.weekdayevening}
        /><br/>
-      <label for="availweekend">Weekends</label>
+      <label htmlFor="availweekend">Weekends</label>
       <input id="availweekend" className="alignright selectalltarget"
        onChange={this.updateAvailability} type="checkbox"
        checked={this.state.user.weekend}/><br/>
-      <label for="availweekdaydaytime">Weekdays daytime</label>
+      <label htmlFor="availweekdaydaytime">Weekdays daytime</label>
       <input id="availweekdaydaytime" className="alignright selectalltarget"
        onChange={this.updateAvailability} type="checkbox"
        checked={this.state.user.weekdaydaytime}/><br/>
-      <label for="availweekdayevening">Weekday evenings</label>
+      <label htmlFor="availweekdayevening">Weekday evenings</label>
       <input id="availweekdayevening" className="alignright selectalltarget"
        onChange={this.updateAvailability} type="checkbox"
        checked={this.state.user.weekdayevening}/><br/>
@@ -146,6 +174,43 @@ class Logo extends React.Component {
     return (
       <img className="logo" title="Raid Alert" alt="Raid Alert Logo"
        src="raid.png" onClick={this.props.switchToAbout}/>
+    );
+  }
+}
+
+class UserSwitcher extends React.Component {
+  render() {
+    return (
+     <div id="userswitcher">
+       <input id="newuid" />
+       <br/>
+       <button id="assumeuid" type="button" onClick={this.props.assumeUid}>
+         Assume UID
+       </button>
+     </div>
+    );
+  }
+}
+
+class PlaceGymButton extends React.Component {
+  render() {
+    return (
+     <div id="placegym">
+     <button id="placegym" type="button" onClick={this.props.switchToPlaceGym}>
+       Place Gym
+     </button>
+     </div>
+    );
+  }
+}
+
+class ErrorMessage extends React.Component {
+  render() {
+    return (
+     <div id="errormessage">
+      <CloseButton onClick={this.props.closeErrorMessage}/>
+       {this.props.message}
+     </div>
     );
   }
 }
@@ -214,21 +279,39 @@ class CustomMarker extends React.Component {
   }
 }
 
-
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       screen: "map",
-      lat: 37.770284,
-      lng: -122.449123,
-      zoom: 13,
+      placeGym: false,
+      newGymLatLng: null,
+      lat: 34,
+      lng: -40,
+      zoom: 19,
+      isAdmin: false,
       gyms: [],
     };
     this.onBoundsChanged = this.onBoundsChanged.bind(this);
+    this.assumeUid = this.assumeUid.bind(this);
+    this.handleMapClick = this.handleMapClick.bind(this);
+    this.switchToPlaceGym = this.switchToPlaceGym.bind(this);
+    this.closeNewGym = this.closeNewGym.bind(this);
+    this.addGym = this.addGym.bind(this);
+    this.closeErrorMessage = this.closeErrorMessage.bind(this);
     function make_handler(context) {
       return function (response) {
-        context.setState({gyms: response});
+        if (response.error) {
+          context.setState({error: response.error});
+        } else {
+          context.setState({
+           gyms: response.gyms,
+           lat: response.lat,
+           lng: response.lng,
+           zoom: response.zoom,
+           isAdmin: response.isadmin,
+          });
+        }
       };
     }
     fetch(config.APIBASEURL + 'gym.php',
@@ -280,6 +363,117 @@ class App extends React.Component {
     this.setState({gyms: gyms});
   }
 
+  assumeUid(event) {
+    let uid = document.getElementById('newuid').value;
+
+    function make_handler(context) {
+      return function (response) {
+        if (response.error) {
+          context.setState({error: response.error});
+        } else {
+          context.setState({
+           gyms: response.gyms,
+           lat: response.lat,
+           lng: response.lng,
+           zoom: response.zoom,
+           isAdmin: response.isadmin,
+          });
+        }
+      };
+    }
+    fetch(config.APIBASEURL + 'assumeuid.php',
+     {
+      credentials: 'include',
+      mode: 'cors',
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+       'uid': uid
+      }),
+     })
+    .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      } else if (response.status === 403) {
+         document.location = config.DISCORDAUTHURL;
+      }
+      throw new Error(response.code);
+    })
+    .then(make_handler(this))
+    .catch(function(error) {
+      console.log('Fetch failed: ', error.message);
+    });
+
+  }
+
+  switchToPlaceGym() {
+    this.setState({placeGym: true});
+    document.getElementById("full-screen").style.cursor = "crosshair";
+  }
+
+  handleMapClick(event) {
+    if (this.state.placeGym) {
+      this.setState({placeGym: false, newGymLatLng: event.latLng});
+      document.getElementById("full-screen").style.cursor = "initial";
+    }
+  }
+
+  closeNewGym() {
+    this.setState({newGymLatLng: null});
+  }
+
+  addGym() {
+    let name = document.getElementById('newgymname').value;
+    if (name === "") {
+      return;
+    }
+
+    function make_handler(context) {
+      return function (response) {
+        if (response.error) {
+          context.setState({error: response.error});
+        } else {
+          context.setState({
+           gyms: response.gyms,
+           lat: response.lat,
+           lng: response.lng,
+           zoom: response.zoom,
+           isAdmin: response.isadmin,
+          });
+        }
+      };
+    }
+    fetch(config.APIBASEURL + 'gym.php',
+     {
+      credentials: 'include',
+      mode: 'cors',
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+       'name': name,
+       'latlng': this.state.newGymLatLng
+      }),
+     })
+    .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      } else if (response.status === 403) {
+         document.location = config.DISCORDAUTHURL;
+      }
+      throw new Error(response.code);
+    })
+    .then(make_handler(this))
+    .catch(function(error) {
+      console.log('Fetch failed: ', error.message);
+    });
+
+    this.setState({newGymLatLng: null});
+  }
+
+  closeErrorMessage() {
+    this.setState({error: null});
+  }
+
   render() {
     var markers = [];
     var ret;
@@ -289,19 +483,35 @@ class App extends React.Component {
         context.switchToGym(gymid, gymname);
       };
     }
+    let extraElement = null;
     for (var key in this.state.gyms) {
       markers.push(<CustomMarker
        key={key}
        name={this.state.gyms[key]['name']}
-       anchor={[this.state.gyms[key]['lng'], this.state.gyms[key]['lat']]}
+       anchor={[this.state.gyms[key]['lat'], this.state.gyms[key]['lng']]}
        color={this.state.gyms[key]['user'] > 0 ? "red" : "blue" }
        onClick={make_handler(key, this.state.gyms[key]['name'], this)}
       />);
-      if (this.state.gymid === key) {
-        markers.push(
+      if (this.state.error) {
+        extraElement = (
+          <ErrorMessage
+            message={this.state.error}
+            closeErrorMessage={this.closeErrorMessage}
+          />
+        );
+      } else if (this.state.newGymLatLng) {
+        extraElement = (
+          <NewGym
+           anchor={this.state.newGymLatLng}
+           addGym={this.addGym}
+           closeNewGym={this.closeNewGym}
+          />
+        );
+      } else if (this.state.gymid === key) {
+        extraElement = (
           <Gym
            key="gym-popup"
-           anchor={[this.state.gyms[key]['lng'], this.state.gyms[key]['lat']]}
+           anchor={[this.state.gyms[key]['lat'], this.state.gyms[key]['lng']]}
            id={this.state.gymid}
            name={this.state.gymName}
            times={this.state.lastTimes}
@@ -312,12 +522,24 @@ class App extends React.Component {
         );
       }
     }
+    let adminControls = "";
+    if (this.state.isAdmin) {
+      adminControls = (
+        <div>
+        <PlaceGymButton switchToPlaceGym={this.switchToPlaceGym} />
+        <UserSwitcher assumeUid={this.assumeUid} />
+        </div>
+      );
+    }
     ret = (
-      <div className="full-screen">
+      <div id="full-screen">
         <Map center={[this.state.lat, this.state.lng]} zoom={this.state.zoom}
-         provider={this.provider} onBoundsChanged={this.onBoundsChanged}>
+         provider={this.provider} onClick={this.handleMapClick}
+         onBoundsChanged={this.onBoundsChanged}>
           {markers}
+          {extraElement}
         </Map>
+        {adminControls}
         <Logo switchToAbout={() => this.switchToAbout()} />
       </div>
     );

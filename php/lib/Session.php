@@ -16,4 +16,11 @@ class Session {
       date_default_timezone_set($_SESSION['guilds'][$_SESSION['current_guild']]['tz']);
     }
   }
+
+  static function adminCheck() {
+    if (! $_SESSION['guilds'][$_SESSION['current_guild']]['isadmin']) {
+      print json_encode(array('error' => 'You must be an admin to use this function'));
+      exit;
+    }
+  }
 }

@@ -20,6 +20,9 @@ delete from availability where user=? and gid=?');
     $this->gymQuery = new MySQLQuery($this, '
 select user, weekend, weekdaydaytime, weekdayevening from availability where gid=?');
 
+    $this->newGymQuery = new MySQLQuery($this, '
+insert into gym (name, guild, lat, lng) values (?, ?, ?, ?)');
+
     $this->gymsByGuildQuery = new MySQLQuery($this, '
 select gym.gid as gid, name, lat, lng, count(distinct user) as user
 from gym
@@ -87,6 +90,12 @@ select * from guild');
       $ret[$gym['gid']] = $gym;
     }
     return $ret;
+  }
+
+  function newGym($name, $guild, $lat, $lng) {
+    $this->newGymQuery->bindParameters(array('types' => 'sidd',
+     'values' => array($name, $guild, $lat, $lng)));
+    $this->newGymQuery->execute();
   }
 
   function getGuilds() {

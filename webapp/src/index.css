@@ -3,9 +3,21 @@ body {
   margin: 20px;
 }
 
+div#errormessage {
+  background-color: white;
+  padding: 20px 0;
+  position: absolute;
+  left: 35%;
+  width: 30%;
+  top: 20%;
+  border-radius: 25px;
+  text-align: center;
+  z-index: 1;
+}
+
 div#gymtitle {
   font-weight: bold;
-  height: 1em;
+  height: 1.2em;
   overflow: hidden;
 }
 
@@ -15,43 +27,57 @@ fieldset {
   border: none;
 }
 
-div.gym {
+div.gym, div.newgym {
   position: absolute;
   background-color: white;
   border-radius: 25px;
   padding: 15px;
-  height: 100px;
   width: 200px;
   z-index: 1;
+}
+div.gym:before, div.newgym:before {
+  content: "";
+  position: absolute;
+  margin-top: -26px;
+  left: 15%;
+  border: solid 15px transparent;
+  border-top-color: #FFF;
+  z-index: 1;
+}
+
+div.gym {
+  height: 100px;
+}
+div.gym:before {
+  top: 156px;
+}
+
+div.newgym {
+  height: 40px;
+}
+div.newgym:before {
+  top: 96px;
 }
 
 input.copyusers {
   margin-top: 2px;
+  width: 98%;
 }
 
 input.nousers {
   margin-top: 2px;
   color: #777777;
   font-style: oblique;
+  width: 98%;
 }
 
 input.alignright {
   position: absolute;
-  right: 70px;
+  right: 12px;
 }
 
-div.gym:before {
-    content: "";
-    position: absolute;
-    top: 120%;
-    margin-top: -26px;
-    left: 15%;
-    border: solid 15px transparent;
-    border-top-color: #FFF;
-    z-index: 1;
-}
 
-div.full-screen {
+div#full-screen {
   position: absolute;
   top: 0;
   right: 0;
@@ -90,6 +116,27 @@ div.dim {
   left: 0;
   background: rgba(255, 255, 255, 0.5);
   z-index: 2;
+}
+
+div#userswitcher {
+  position: absolute;
+  width: 154px;
+  top: 10px;
+  right: 80px;
+  padding: 5px;
+  background-color: white;
+}
+
+div#placegym {
+  position: absolute;
+  top: 10px;
+  right: 254px;
+  padding: 5px;
+  background-color: white;
+}
+
+button#assumeuid {
+  width: 100%;
 }
 
 img.logo {

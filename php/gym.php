@@ -22,18 +22,31 @@ try {
   } else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
 
-    $db->updateAvailability(
-     $_SESSION['userid'],
-     intval($data['gid']),
-     $data['weekend'],
-     $data['weekdaydaytime'],
-     $data['weekdayevening']
-    );
-    print json_encode($db->getAvailability($data['gid'], $_SESSION['userid']));
+    if (isset($data['gid']) && isset($data['weekend'])
+     && isset($data['weekdaydaytime']) && isset($data['weekdayevening'])) {
+      $db->updateAvailability(
+       $_SESSION['userid'],
+       intval($data['gid']),
+       $data['weekend'],
+       $data['weekdaydaytime'],
+       $data['weekdayevening']
+      );
+      print json_encode($db->getAvailability($data['gid'], $_SESSION['userid']));
+    } else if (isset($data['name']) && isset($data['latlng'])) {
+      Session::adminCheck();
+      $db->newGym(
+       $data['name'],
+       $_SESSION['current_guild'],
+       $data['latlng'][0],
+       $data['latlng'][1]
+      );
+      RaidAlert::printInfoBatch($db);
+    } else {
+      print json_encode(array('error' => 'unknown POST operation'));
+    }
   } else {
-    print json_encode($db->getGymsByGuild($_SESSION['current_guild'], $_SESSION['userid']));
+    RaidAlert::printInfoBatch($db);
   }
 } catch (Exception $e) {
-  http_response_code(403);
   print json_encode(array('error' => $e->getMessage()));
 }

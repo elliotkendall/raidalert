@@ -57,6 +57,9 @@ $guilds = $db->getGuilds();
 $filteredUserGuilds = array();
 foreach($userguilds as $guild) {
   if (isset($guilds[$guild['id']])) {
+    $guilds[$guild['id']]['isadmin'] = Discord::hasAnyPermission(
+     $guild['permissions'],
+     $config['Admin permissions']);
     $filteredUserGuilds[$guild['id']] = $guilds[$guild['id']];
   }
 }
