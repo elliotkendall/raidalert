@@ -3,6 +3,18 @@ body {
   margin: 20px;
 }
 
+button#clear {
+  width: 100%;
+  margin-top: 2px;
+}
+
+button.marker {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background-color: transparent;
+}
+
 div#errormessage {
   background-color: white;
   padding: 20px 0;
@@ -119,18 +131,21 @@ div.dim {
 }
 
 div#userswitcher {
-  position: absolute;
   width: 154px;
-  top: 10px;
   right: 80px;
-  padding: 5px;
-  background-color: white;
+}
+
+div#selectmultiple {
+  left: 10px;
 }
 
 div#placegym {
+  right: 254px;
+}
+
+div#placegym, div#selectmultiple, div#userswitcher {
   position: absolute;
   top: 10px;
-  right: 254px;
   padding: 5px;
   background-color: white;
 }

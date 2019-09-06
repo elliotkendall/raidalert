@@ -4,6 +4,7 @@
   "homepage": "https://dx4.org/raidalert",
   "private": true,
   "dependencies": {
+    "dragselect": "^1.13.1",
     "pigeon-maps": "^0.11.8",
     "pigeon-marker": "^0.3.4",
     "react": "^16.6.3",

@@ -26,12 +26,18 @@ try {
      && isset($data['weekdaydaytime']) && isset($data['weekdayevening'])) {
       $db->updateAvailability(
        $_SESSION['userid'],
-       intval($data['gid']),
+       $data['gid'],
        $data['weekend'],
        $data['weekdaydaytime'],
        $data['weekdayevening']
       );
-      print json_encode($db->getAvailability($data['gid'], $_SESSION['userid']));
+      if (is_array($data['gid'])) {
+        # We're updating a bunch of gyms, so return all the gym info
+        RaidAlert::printInfoBatch($db);
+      } else {
+        # Just return info for this gym
+        print json_encode($db->getAvailability($data['gid'], $_SESSION['userid']));
+      }
     } else if (isset($data['name']) && isset($data['latlng'])) {
       Session::adminCheck();
       $db->newGym(

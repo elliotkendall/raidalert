@@ -36,15 +36,20 @@ group by gid');
 select * from guild');
   }
 
-  function updateAvailability($user, $gid, $weekend, $weekdaydaytime, $weekdayevening) {
-    if ($weekend || $weekdaydaytime || $weekdayevening) {
-      $this->updateAvailabilityQuery->bindParameters(array('types' => 'iiiiiiii',
-       'values' => array($user, $gid, $weekend, $weekdaydaytime, $weekdayevening, $weekend, $weekdaydaytime, $weekdayevening)));
-      $this->updateAvailabilityQuery->execute();
-    } else {
-      $this->deleteAvailabilityQuery->bindParameters(array('types' => 'ii',
-       'values' => array($user, $gid)));
-      $this->deleteAvailabilityQuery->execute();
+  function updateAvailability($user, $gids, $weekend, $weekdaydaytime, $weekdayevening) {
+    if (! is_array($gids)) {
+      $gids = array($gids);
+    }
+    foreach ($gids as $gid) {
+      if ($weekend || $weekdaydaytime || $weekdayevening) {
+        $this->updateAvailabilityQuery->bindParameters(array('types' => 'iiiiiiii',
+         'values' => array($user, $gid, $weekend, $weekdaydaytime, $weekdayevening, $weekend, $weekdaydaytime, $weekdayevening)));
+        $this->updateAvailabilityQuery->execute();
+      } else {
+        $this->deleteAvailabilityQuery->bindParameters(array('types' => 'ii',
+         'values' => array($user, $gid)));
+        $this->deleteAvailabilityQuery->execute();
+      }
     }
   }
 
