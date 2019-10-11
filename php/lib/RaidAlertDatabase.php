@@ -81,7 +81,7 @@ select * from guild');
         continue;
       }
       if ($row[$now] == 1) {
-        $users[] = $row['user'];
+        $users[] = (string)$row['user'];
       }
     }
     return array('availability' => $users, 'self' => $myavail);
