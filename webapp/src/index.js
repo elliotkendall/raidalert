@@ -133,6 +133,7 @@ class Gym extends React.Component {
     super(props);
     this.updateAvailability = this.updateAvailability.bind(this);
     this.handleSelectAll = this.handleSelectAll.bind(this);
+    this.delete = this.delete.bind(this);
     this.state = {
       info: {},
       availability: {},
@@ -173,6 +174,32 @@ class Gym extends React.Component {
       siblings[i].checked = event.target.checked;
     }
     this.updateAvailability(event);
+  }
+
+  delete(event) {
+    fetch(config.APIBASEURL + 'gym.php',
+     {
+      credentials: 'include',
+      mode: 'cors',
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+       'gid': this.props.id
+      }),
+     })
+    .then(function(response) {
+      if (response.ok) {
+        return response.json();
+      } else if (response.status === 403) {
+         document.location = config.DISCORDAUTHURL;
+      }
+      throw new Error(response.code);
+    })
+    .then(this.props.updateGyms())
+    .then(this.props.switchToMap())
+    .catch(function(error) {
+      console.log('Fetch failed: ', error.message);
+    });
   }
 
   updateAvailability(event) {
@@ -235,13 +262,25 @@ class Gym extends React.Component {
       field = (<input className="nousers"
        readOnly="readOnly" value="no one available now"/>);
     }
+
+    let deleteImage = null;
+    let gymTitleId = "gymtitle";
+    if (this.props.isAdmin) {
+      deleteImage = (
+      <img className="delete" src="delete.png" alt="Delete this gym" title="Delete this gym"
+       onClick={() => { if (window.confirm('Are you sure you wish to delete this gym?')) this.delete() } }
+      />);
+      gymTitleId = "admingymtitle";
+    }
+
     return (
     <div style={{
       left: this.props.left - 50,
       top: this.props.top - 174,
     }} className="gym">
     <CloseButton onClick={this.props.switchToMap}/>
-      <div id="gymtitle">{this.props.name} ({this.props.id})</div>
+      {deleteImage}
+      <div id={gymTitleId}>{this.props.name} ({this.props.id})</div>
       <fieldset>
       <label htmlFor="selectall">Select All</label>
       <input id="selectall" onChange={this.handleSelectAll}
@@ -629,6 +668,8 @@ class App extends React.Component {
            anchor={[this.state.gyms[key]['lat'], this.state.gyms[key]['lng']]}
            id={this.state.gymid}
            name={this.state.gymName}
+           isAdmin={this.state.isAdmin}
+           updateGyms={this.updateGyms}
            setUserFlag={() => this.setUserFlag(this.state.gymid)}
            clearUserFlag={() => this.clearUserFlag(this.state.gymid)}
            switchToMap={() => this.switchToMap()}

@@ -19,6 +19,15 @@ Session::start($config['Session cookie name']);
 try {
   if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     print json_encode($db->getAvailability($_GET['id'], $_SESSION['userid']));
+  } else if ($_SERVER['REQUEST_METHOD'] == 'DELETE') {
+    Session::adminCheck();
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (isset($data['gid'])) {
+      $db->deleteGym($data['gid']);
+      RaidAlert::printInfoBatch($db);
+    } else {
+      print json_encode(array('error' => 'must supply gym id'));
+    }
   } else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = json_decode(file_get_contents('php://input'), true);
 

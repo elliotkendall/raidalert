@@ -27,10 +27,14 @@ div#errormessage {
   z-index: 1;
 }
 
-div#gymtitle {
+div#gymtitle, div#admingymtitle {
   font-weight: bold;
   height: 1.2em;
   overflow: hidden;
+}
+
+div#admingymtitle {
+  margin-left: 17px;
 }
 
 fieldset {
@@ -44,7 +48,7 @@ div.gym, div.newgym {
   background-color: white;
   border-radius: 25px;
   padding: 15px;
-  width: 200px;
+  width: 250px;
   z-index: 1;
 }
 div.gym:before, div.newgym:before {
@@ -87,7 +91,6 @@ input.alignright {
   position: absolute;
   right: 12px;
 }
-
 
 div#full-screen {
   position: absolute;
@@ -192,4 +195,8 @@ select[multiple] {
 
 input.copyusers {
   width: 100%;
+}
+
+img.delete {
+  position: absolute;
 }

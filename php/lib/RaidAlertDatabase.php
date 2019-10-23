@@ -34,6 +34,9 @@ group by gid');
 
     $this->guildsQuery = new MySQLQuery($this, '
 select * from guild');
+
+    $this->deleteGymQuery = new MySQLQuery($this, '
+delete from gym where gid=?');
   }
 
   function updateAvailability($user, $gids, $weekend, $weekdaydaytime, $weekdayevening) {
@@ -81,7 +84,7 @@ select * from guild');
         continue;
       }
       if ($row[$now] == 1) {
-        $users[] = (string)$row['user'];
+        $users[] = $row['user'];
       }
     }
     return array('availability' => $users, 'self' => $myavail);
@@ -101,6 +104,12 @@ select * from guild');
     $this->newGymQuery->bindParameters(array('types' => 'sidd',
      'values' => array($name, $guild, $lat, $lng)));
     $this->newGymQuery->execute();
+  }
+
+  function deleteGym($gid) {
+    $this->deleteGymQuery->bindParameters(array('types' => 'i',
+     'values' => array($gid)));
+    $this->deleteGymQuery->execute();
   }
 
   function getGuilds() {
