@@ -84,7 +84,7 @@ delete from gym where gid=?');
         continue;
       }
       if ($row[$now] == 1) {
-        $users[] = $row['user'];
+        $users[] = strval($row['user']);
       }
     }
     return array('availability' => $users, 'self' => $myavail);
