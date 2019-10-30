@@ -1,0 +1,12 @@
+{
+  "Database username": "",
+  "Database password": "",
+  "Database name": "raidalert",
+  "Database host": "localhost",
+  "Guild ID": 0,
+  "Bot token": "",
+  "Fuzzy match threshold": 80,
+  "Channels": {
+    "channelname": [[0, 0], [0, 0]],
+  }
+}
