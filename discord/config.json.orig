@@ -6,6 +6,7 @@
   "Guild ID": 0,
   "Bot token": "",
   "Fuzzy match threshold": 80,
+  "Database refresh frequency": 600,
   "Channels": {
     "channelname": [[0, 0], [0, 0]],
   }
