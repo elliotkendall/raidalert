@@ -2,6 +2,7 @@
 import re
 import sys
 import os
+import time
 from raidalertdb import raidalertdb
 from fuzzywuzzy import fuzz
 from config import config
@@ -24,11 +25,9 @@ def normalize(gym):
   return gym
 
 def logMessage(message):
-  import time
   print(time.asctime() + ' ' + message)
 
 def getCurrentTime():
-  import time
   t = time.localtime()
   if t.tm_wday == 5 or t.tm_wday == 6:
     return 'weekend'
@@ -38,12 +37,27 @@ def getCurrentTime():
     return 'weekdaydaytime'
 
 def getUsersToNotify(gid):
+
   now = getCurrentTime()
   toNotify = []
   for user, avail in radb.getAvailability(gid).items():
     if avail[now] == 1:
       toNotify.append(user)
   return toNotify
+
+def getGymsByChannel(radb, guildid, channels):
+  gyms = radb.getGyms(guildid)
+
+  gymsByChannel = {}
+  for gym in gyms:
+    gym['name'] = normalize(gym['name'])
+    for channel, coords in channels.items():
+      if coords[1][0] <= gym['lat'] <= coords[0][0] and coords[1][1] <= gym['lng'] <= coords[0][1]:
+        if channel in gymsByChannel:
+          gymsByChannel[channel].append(gym)
+        else:
+          gymsByChannel[channel] = [gym]
+  return gymsByChannel
 
 config = config(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                              'config.json'))
@@ -53,17 +67,8 @@ radb = raidalertdb(config.get('Database username'),
                    config.get('Database name'),
                    config.get('Database host'))
 
-gyms = radb.getGyms(config.get('Guild ID'))
-
-gymsByChannel = {}
-for gym in gyms:
-  gym['name'] = normalize(gym['name'])
-  for channel, coords in config.get('Channels').items():
-    if coords[1][0] <= gym['lat'] <= coords[0][0] and coords[1][1] <= gym['lng'] <= coords[0][1]:
-      if channel in gymsByChannel:
-        gymsByChannel[channel].append(gym)
-      else:
-        gymsByChannel[channel] = [gym]
+gymsByChannel = getGymsByChannel(radb, config.get('Guild ID'), config.get('Channels'))
+lastUpdate = time.localtime()
 
 client = discord.Client()
 
@@ -96,6 +101,8 @@ async def on_reaction_add(reaction, user):
 
 @client.event
 async def on_message(message):
+  global gymsByChannel
+
   # If it's our message, ignore it
   if message.author == client.user:
     return
@@ -122,6 +129,11 @@ async def on_message(message):
   best = 0
   bestGid = None
   bestName = ''
+
+  if (time.localtime() > lastUpdate + config.get('Database refresh frequency')):
+    logMessage('Refreshing database')
+    gymsByChannel = getGymsByChannel()
+
   for gym in gymsByChannel[message.channel.name]:
     ratio = fuzz.token_set_ratio(normalized, gym['name'])
     if ratio > best:
