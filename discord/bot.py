@@ -68,7 +68,7 @@ radb = raidalertdb(config.get('Database username'),
                    config.get('Database host'))
 
 gymsByChannel = getGymsByChannel(radb, config.get('Guild ID'), config.get('Channels'))
-lastUpdate = time.localtime()
+lastUpdate = time.time()
 
 client = discord.Client()
 
@@ -130,7 +130,7 @@ async def on_message(message):
   bestGid = None
   bestName = ''
 
-  if (time.localtime() > lastUpdate + config.get('Database refresh frequency')):
+  if (time.time() > lastUpdate + config.get('Database refresh frequency')):
     logMessage('Refreshing database')
     gymsByChannel = getGymsByChannel()
 
