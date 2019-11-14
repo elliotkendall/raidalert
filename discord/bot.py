@@ -24,6 +24,15 @@ def normalize(gym):
 
   return gym
 
+def extractAliases(gymname):
+  result = re.search('(.*?)\s*\((.*?)\)$', gymname)
+  if not result:
+    return [gymname]
+  aliases = [result[1]]
+  for i in re.split('\s*\/\s*', result[2]):
+    aliases.append(i)
+  return aliases
+
 def logMessage(message):
   print(time.asctime() + ' ' + message)
 
@@ -51,6 +60,7 @@ def getGymsByChannel(radb, guildid, channels):
   gymsByChannel = {}
   for gym in gyms:
     gym['name'] = normalize(gym['name'])
+    gym['aliases'] = extractAliases(gym['name'])
     for channel, coords in channels.items():
       if coords[1][0] <= gym['lat'] <= coords[0][0] and coords[1][1] <= gym['lng'] <= coords[0][1]:
         if channel in gymsByChannel:
@@ -132,14 +142,15 @@ async def on_message(message):
 
   if (time.time() > lastUpdate + config.get('Database refresh frequency')):
     logMessage('Refreshing database')
-    gymsByChannel = getGymsByChannel()
+    gymsByChannel = getGymsByChannel(radb, config.get('Guild ID'), config.get('Channels'))
 
   for gym in gymsByChannel[message.channel.name]:
-    ratio = fuzz.token_set_ratio(normalized, gym['name'])
-    if ratio > best:
-      best = ratio
-      bestGid = gym['gid']
-      bestName = gym['name']
+    for alias in gym['aliases']:
+      ratio = fuzz.token_set_ratio(normalized, alias)
+      if ratio > best:
+        best = ratio
+        bestGid = gym['gid']
+        bestName = gym['name']
 
   if best < config.get('Fuzzy match threshold'):
     logMessage('Best match below threshold: ' + str(best) + ' ' + normalized + ': ' + bestName)
