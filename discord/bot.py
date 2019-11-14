@@ -6,6 +6,8 @@ import time
 from raidalertdb import raidalertdb
 from fuzzywuzzy import fuzz
 from config import config
+from fastkml import kml
+from shapely.geometry import Point, shape
 import discord
 
 def normalize(gym):
@@ -61,23 +63,42 @@ def getGymsByChannel(radb, guildid, channels):
   for gym in gyms:
     gym['name'] = normalize(gym['name'])
     gym['aliases'] = extractAliases(gym['name'])
-    for channel, coords in channels.items():
-      if coords[1][0] <= gym['lat'] <= coords[0][0] and coords[1][1] <= gym['lng'] <= coords[0][1]:
+    # For some reason this expects coords in lng,lat order
+    gympoint = Point(gym['lng'], gym['lat'])
+    for channel, poly in channels.items():
+      if poly.contains(gympoint):
         if channel in gymsByChannel:
           gymsByChannel[channel].append(gym)
         else:
           gymsByChannel[channel] = [gym]
   return gymsByChannel
 
+def parseChannelsKML(filename, channels):
+  with open(filename, 'rt') as myfile:
+    doc=myfile.read()
+
+  k = kml.KML()
+  k.from_string(doc)
+  ret = {}
+  for document in list(k.features()):
+    for region in list(document.features()):
+      for channel in list(region.features()):
+        if channel.name in channels:
+          ret[channel.name] = shape(channel._geometry.geometry)
+
+  return ret
+
 config = config(os.path.join(os.path.dirname(os.path.realpath(__file__)),
                              'config.json'))
+
+channels = parseChannelsKML(config.get('Channel KML file'), config.get('Channels'))
 
 radb = raidalertdb(config.get('Database username'),
                    config.get('Database password'),
                    config.get('Database name'),
                    config.get('Database host'))
 
-gymsByChannel = getGymsByChannel(radb, config.get('Guild ID'), config.get('Channels'))
+gymsByChannel = getGymsByChannel(radb, config.get('Guild ID'), channels)
 lastUpdate = time.time()
 
 client = discord.Client()
@@ -142,7 +163,7 @@ async def on_message(message):
 
   if (time.time() > lastUpdate + config.get('Database refresh frequency')):
     logMessage('Refreshing database')
-    gymsByChannel = getGymsByChannel(radb, config.get('Guild ID'), config.get('Channels'))
+    gymsByChannel = getGymsByChannel(radb, config.get('Guild ID'), channels)
 
   for gym in gymsByChannel[message.channel.name]:
     for alias in gym['aliases']:
